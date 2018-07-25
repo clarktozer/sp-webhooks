@@ -26,12 +26,17 @@ namespace WebHooks.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
+            var changeTokensConnection = Configuration.GetConnectionString($"ChangeTokens");
+            var queueConnection = Configuration.GetConnectionString($"Queue");
+            var queueName = Configuration["Queue:Name"];
+
+            services.AddDbContext<ChangeTokenContext>(options => options.UseSqlServer(changeTokensConnection));
+            services.AddScoped<IQueueContext, QueueContext>();
+
             services.AddMvc(options =>
             {
                 options.ModelBinderProviders.Insert(0, new NotificationModelBinderProvider());
             });
-
-            services.AddDbContext<ChangeTokenContext>(options => options.UseSqlServer(Configuration.GetConnectionString($"ChangeTokens")));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)

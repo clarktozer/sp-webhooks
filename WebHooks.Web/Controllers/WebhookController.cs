@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using WebHooks.Data;
 using WebHooks.Data.Models;
 
 namespace WebHooks.Web.Controllers
@@ -14,10 +15,12 @@ namespace WebHooks.Web.Controllers
     public class WebhookController : Controller
     {
         private readonly ILogger _logger;
+        private readonly IQueueContext _queue;
 
-        public WebhookController(ILogger<WebhookController> logger)
+        public WebhookController(ILogger<WebhookController> logger, IQueueContext queue)
         {
             _logger = logger;
+            _queue = queue;
         }
 
         [HttpPost("consume")]
@@ -33,8 +36,11 @@ namespace WebHooks.Web.Controllers
             {
                 if (response != null && response.Value.Count > 0)
                 {
-                    var subIds = response.Value.Select(notification => notification.SubscriptionId);
-                    _logger.LogDebug("Notifications received for ids: {0}", string.Join(", ", subIds));
+                    _logger.LogDebug("Notifications received for ids: {0}", string.Join(", ", response.Value.Select(notification => notification.SubscriptionId)));
+                    foreach (var notification in response.Value)
+                    {
+                        await _queue.Push(notification);
+                    }
                 }
             }
             catch (Exception ex)

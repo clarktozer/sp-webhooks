@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using WebHooks.Data;
 using WebHooks.Web.Models;
 
 namespace WebHooks.Web.Controllers
