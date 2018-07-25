@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WebHooks.Data.Binders;
+using Microsoft.EntityFrameworkCore;
+using WebHooks.Data;
 
 namespace WebHooks.Web
 {
@@ -20,7 +22,6 @@ namespace WebHooks.Web
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc(options =>
@@ -28,10 +29,9 @@ namespace WebHooks.Web
                 options.ModelBinderProviders.Insert(0, new NotificationModelBinderProvider());
             });
 
-            var changeTokensConnectionString = Configuration.GetConnectionString($"ChangeTokens");
+            services.AddDbContext<ChangeTokenContext>(options => options.UseSqlServer(Configuration.GetConnectionString($"ChangeTokens")));
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())

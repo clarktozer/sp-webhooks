@@ -30,7 +30,8 @@ namespace WebHooks.Web.Controllers
             {
                 if (response != null && response.Value.Count > 0)
                 {
-
+                    var subIds = response.Value.Select(notification => notification.SubscriptionId);
+                    Trace.TraceInformation("Notifications received for ids: {0}", string.Join(", ", subIds));
                 }
             }
             catch (Exception ex)
