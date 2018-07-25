@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using WebHooks.Data.Binders;
 using Microsoft.EntityFrameworkCore;
 using WebHooks.Data;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.AzureAppServices;
 
 namespace WebHooks.Web
 {
@@ -32,8 +34,17 @@ namespace WebHooks.Web
             services.AddDbContext<ChangeTokenContext>(options => options.UseSqlServer(Configuration.GetConnectionString($"ChangeTokens")));
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddDebug();
+            loggerFactory.AddAzureWebAppDiagnostics(
+                new AzureAppServicesDiagnosticsSettings
+                {
+                    OutputTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss zzz} [{Level}] {RequestId}-{SourceContext}: {Message}{NewLine}{Exception}"
+                }
+            );
+
             if (env.IsDevelopment())
             {
                 app.UseBrowserLink();

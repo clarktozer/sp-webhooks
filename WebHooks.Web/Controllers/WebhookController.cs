@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using WebHooks.Data.Models;
 
 namespace WebHooks.Web.Controllers
@@ -12,9 +13,11 @@ namespace WebHooks.Web.Controllers
     [Route("api/Webhook")]
     public class WebhookController : Controller
     {
-        public WebhookController()
-        {
+        private readonly ILogger _logger;
 
+        public WebhookController(ILogger<WebhookController> logger)
+        {
+            _logger = logger;
         }
 
         [HttpPost("consume")]
@@ -22,7 +25,7 @@ namespace WebHooks.Web.Controllers
         {
             if (validationToken != null)
             {
-                Trace.TraceInformation("Subscription added with validationToken {0}", validationToken);
+                _logger.LogDebug("Subscription added with validationToken {0}", validationToken);
                 return Content(validationToken);
             }
 
@@ -31,12 +34,12 @@ namespace WebHooks.Web.Controllers
                 if (response != null && response.Value.Count > 0)
                 {
                     var subIds = response.Value.Select(notification => notification.SubscriptionId);
-                    Trace.TraceInformation("Notifications received for ids: {0}", string.Join(", ", subIds));
+                    _logger.LogDebug("Notifications received for ids: {0}", string.Join(", ", subIds));
                 }
             }
             catch (Exception ex)
             {
-                Trace.TraceError(ex.Message);
+                _logger.LogError(ex.Message);
             }
 
             return Ok();
