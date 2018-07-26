@@ -1,13 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Text;
 using WebHooks.Data;
-using WebHooks.Data.Models;
-using Microsoft.EntityFrameworkCore;
 using WebHooks.SharePoint;
 
 namespace WebHooks.Job
@@ -16,6 +13,15 @@ namespace WebHooks.Job
     {
         private static IConfiguration _configuration;
         private static IServiceProvider _serviceProvider;
+
+        public static void Main(string[] args)
+        {
+            AddConfiguration();
+            AddServiceCollection();
+            var changeProcessor = _serviceProvider.GetService<IChangeProcesser>();
+            changeProcessor.Process();
+            RunAndBlock();
+        }
 
         private static void AddConfiguration()
         {
@@ -39,7 +45,9 @@ namespace WebHooks.Job
                 .AddDbContext<ChangeTokenContext>(options => options.UseSqlServer(changeTokensConnection))
                 .AddSingleton(_configuration)
                 .AddTransient<IQueueContext, QueueContext>()
-                .AddTransient<IChangeHandler, ChangeHandler>()
+                .AddTransient<IChangeProcesser, ChangeProcessor>()
+                .AddTransient<ITokenProcessor, TokenProcessor>()
+                .AddTransient<IListProcessor, ListProcessor>()
                 .BuildServiceProvider();
 
             serviceProvider
@@ -47,15 +55,6 @@ namespace WebHooks.Job
                 .AddConsole(_configuration.GetSection("Logging"));
 
             _serviceProvider = serviceProvider;
-        }
-
-        public static void Main(string[] args)
-        {
-            AddConfiguration();
-            AddServiceCollection();
-            var changeHandler = _serviceProvider.GetService<IChangeHandler>();
-            changeHandler.Process();
-            RunAndBlock();
         }
 
         private static void RunAndBlock()
