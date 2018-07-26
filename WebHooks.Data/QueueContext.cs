@@ -12,10 +12,10 @@ namespace WebHooks.Data
     public interface IQueueContext
     {
         Task Push<T>(T item);
-        void OnPop(MessageHandler handler);
+        void OnPop<T>(MessageHandler<T> handler);
     }
 
-    public delegate void MessageHandler(Message msg, CancellationToken token);
+    public delegate void MessageHandler<T>(T msg);
 
     public class QueueContext : IQueueContext
     {
@@ -30,12 +30,15 @@ namespace WebHooks.Data
             QueueName = configuration["Queue:Name"];
         }
 
-        public void OnPop(MessageHandler handler)
+        public void OnPop<T>(MessageHandler<T> handler)
         {
             QueueClient client = new QueueClient(ConnectionString, QueueName);
             client.RegisterMessageHandler(async (msg, token) =>
             {
-                handler(msg, token);
+                var messageBody = Encoding.Default.GetString(msg.Body);
+                _logger.LogInformation($"Notification received: {messageBody}");
+                var deserialized = JsonConvert.DeserializeObject<T>(messageBody);
+                handler(deserialized);
                 await client.CompleteAsync(msg.SystemProperties.LockToken);
             }, new MessageHandlerOptions(ExceptionReceivedHandler)
             {

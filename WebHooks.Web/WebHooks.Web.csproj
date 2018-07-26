@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WebHooks.Data\WebHooks.Data.csproj" />
-    <ProjectReference Include="..\WebHooks.SharePoint\WebHooks.SharePoint.csproj" />
   </ItemGroup>
 
 </Project>
